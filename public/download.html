@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다운로드</title>
+</head>
+<body>
+  <div id="auth-section">
+    <p>인증 코드를 입력하세요</p>
+    <input type="password" id="code-input" onkeydown="if(event.key==='Enter') verify()">
+    <button onclick="verify()">확인</button>
+    <p id="error-msg" style="color:red;display:none"></p>
+  </div>
+
+  <div id="download-section" style="display:none">
+    <button id="download-btn" onclick="doDownload()">다운로드</button>
+  </div>
+
+  <script>
+    const DRIVE_URL = 'https://drive.google.com/uc?export=download&id=1jCQ_C-TLAK9HaxWw0dfQcon-AXfyoTFJ';
+
+    async function verify() {
+      const code  = document.getElementById('code-input').value.trim();
+      const error = document.getElementById('error-msg');
+      if (!code) { error.textContent = '코드를 입력해주세요.'; error.style.display = 'block'; return; }
+
+      const res  = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        document.getElementById('auth-section').style.display    = 'none';
+        document.getElementById('download-section').style.display = 'block';
+      } else {
+        error.textContent   = '인증 코드가 올바르지 않습니다.';
+        error.style.display = 'block';
+      }
+    }
+
+    function doDownload() {
+      // 다운로드 시작 후 버튼 숨기기
+      const a = document.createElement('a');
+      a.href = DRIVE_URL;
+      a.click();
+      document.getElementById('download-section').style.display = 'none';
+      document.getElementById('auth-section').innerHTML = '<p>다운로드가 시작되었습니다.</p>';
+      document.getElementById('auth-section').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
