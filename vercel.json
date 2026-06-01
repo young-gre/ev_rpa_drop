@@ -16,4 +16,3 @@ cat > ~/Desktop/ev_rpa_drop/vercel.json << 'EOF'
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
-EOF
