@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS 헤더
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
   }
 
   const { system, userContent } = req.body;
-
   if (!system || !userContent) {
     return res.status(400).json({ error: 'system, userContent 필드가 필요합니다' });
   }
