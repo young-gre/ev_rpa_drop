@@ -1,4 +1,3 @@
-cat > ~/Desktop/ev_rpa_drop/vercel.json << 'EOF'
 {
   "headers": [
     {
