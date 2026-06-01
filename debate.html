@@ -3,38 +3,31 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Claude vs Claude 토론</title>
+<title>Claude vs Claude 대화</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
   .container { width: 100%; max-width: 720px; }
   h1 { font-size: 18px; font-weight: 500; color: #1a1a1a; margin-bottom: 1.5rem; text-align: center; }
-
   .card { background: #fff; border: 0.5px solid #e0e0dc; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-
   label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
-  input[type=text] { width: 100%; font-size: 15px; padding: 9px 12px; border: 0.5px solid #d0d0cc; border-radius: 8px; background: #fafaf8; color: #1a1a1a; outline: none; }
-  input[type=text]:focus { border-color: #aaa; }
-
+  input[type=text], textarea { width: 100%; font-size: 14px; padding: 9px 12px; border: 0.5px solid #d0d0cc; border-radius: 8px; background: #fafaf8; color: #1a1a1a; outline: none; font-family: inherit; }
+  input[type=text]:focus, textarea:focus { border-color: #aaa; }
+  textarea { resize: vertical; line-height: 1.6; }
   .row { display: flex; gap: 8px; margin-top: 10px; }
   .half { flex: 1; background: #fafaf8; border: 0.5px solid #e0e0dc; border-radius: 8px; padding: 10px 12px; }
   .half label { font-size: 12px; margin-bottom: 4px; }
   .half input { font-size: 13px; background: transparent; border: none; color: #1a1a1a; outline: none; width: 100%; }
-
   .opt-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
   .opt-row label { margin: 0; }
   select { font-size: 13px; padding: 5px 8px; border: 0.5px solid #d0d0cc; border-radius: 8px; background: #fafaf8; color: #1a1a1a; outline: none; }
-
   .btn-primary { width: 100%; margin-top: 12px; padding: 11px; font-size: 14px; font-weight: 500; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
   .btn-primary:hover { background: #333; }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .debate { display: none; }
-
+  .chat { display: none; }
   .topic-bar { background: #fafaf8; border: 0.5px solid #e0e0dc; border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
   .topic-bar .txt { font-size: 14px; font-weight: 500; color: #1a1a1a; flex: 1; }
   .topic-bar .cnt { font-size: 12px; color: #999; }
-
   .msgs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1rem; }
   .msg { display: flex; gap: 10px; align-items: flex-start; }
   .msg.r { flex-direction: row-reverse; }
@@ -43,13 +36,11 @@
   .av.b { background: #E1F5EE; color: #085041; }
   .bub { max-width: 88%; background: #fff; border: 0.5px solid #e0e0dc; border-radius: 12px; padding: 10px 14px; font-size: 14px; line-height: 1.65; color: #1a1a1a; }
   .bub .nm { font-size: 11px; color: #999; margin-bottom: 4px; }
-
   .typing { display: flex; align-items: center; gap: 5px; padding: 4px 0; }
   .dot { width: 5px; height: 5px; border-radius: 50%; background: #999; animation: blink 1.2s infinite; }
   .dot:nth-child(2) { animation-delay: .2s; }
   .dot:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
-
   .btns { display: flex; gap: 8px; }
   .btn-once { flex: 1; padding: 9px; font-size: 14px; background: #fff; border: 0.5px solid #d0d0cc; border-radius: 8px; color: #1a1a1a; cursor: pointer; }
   .btn-once:hover { background: #fafaf8; }
@@ -60,141 +51,181 @@
   .btn-ghost:hover { background: #fafaf8; }
   .turn-lbl { font-size: 12px; color: #999; text-align: center; padding: 4px 0 8px; }
   .err { font-size: 13px; color: #993C1D; background: #FAECE7; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; }
+  .mode-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { flex: 1; padding: 8px; font-size: 13px; border: 0.5px solid #d0d0cc; border-radius: 8px; background: #fafaf8; color: #666; cursor: pointer; text-align: center; }
+  .tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Claude vs Claude 토론</h1>
+  <h1>Claude × Claude</h1>
 
   <div class="card" id="setup">
-    <label>토론 주제</label>
-    <input id="topic" type="text" placeholder="예) 인공지능은 인간의 창의성을 대체할 수 있다" />
+    <div class="mode-tabs">
+      <div class="tab active" id="tab-chat" onclick="setMode('chat')">자유 대화</div>
+      <div class="tab" id="tab-debate" onclick="setMode('debate')">토론</div>
+    </div>
+
+    <label id="topic-label">대화 주제 (선택)</label>
+    <input id="topic" type="text" placeholder="예) 요즘 사는 게 어때? / 비워두면 자유롭게 대화" />
+
     <div class="row">
       <div class="half">
-        <label>Claude A 페르소나</label>
-        <input id="pA" type="text" placeholder="예) AI 낙관론자" />
+        <label>Claude A 성격</label>
+        <input id="pA" type="text" placeholder="예) 유머러스한 친구" />
       </div>
       <div class="half">
-        <label>Claude B 페르소나</label>
-        <input id="pB" type="text" placeholder="예) 인문학자" />
+        <label>Claude B 성격</label>
+        <input id="pB" type="text" placeholder="예) 진지한 철학자" />
       </div>
     </div>
+
     <div class="opt-row">
       <label>히스토리</label>
       <select id="hist-limit">
         <option value="0">전체</option>
-        <option value="6" selected>최근 6발언 (권장)</option>
-        <option value="4">최근 4발언</option>
+        <option value="6" selected>최근 6개 (권장)</option>
+        <option value="4">최근 4개</option>
       </select>
     </div>
-    <button class="btn-primary" onclick="startDebate()">토론 시작</button>
+    <button class="btn-primary" onclick="startChat()">대화 시작</button>
   </div>
 
-  <div class="debate" id="debate">
+  <div class="chat" id="chat">
     <div class="topic-bar">
       <div class="txt" id="topic-disp"></div>
-      <span class="cnt" id="cnt">0번째 발언</span>
+      <span class="cnt" id="cnt">0번째 대화</span>
     </div>
     <div class="msgs" id="msgs"></div>
     <div class="turn-lbl" id="turn-lbl"></div>
     <div class="btns">
       <button class="btn-once" id="btn-once" onclick="nextOnce()">한 번 →</button>
-      <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">▶ 자동 진행</button>
+      <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">▶ 자동</button>
       <button class="btn-ghost" onclick="resetAll()">↺</button>
     </div>
   </div>
 </div>
 
 <script>
-let topic='',pA='',pB='',history=[],turn=0,round=0;
-let autoMode=false,autoTimer=null,isLoading=false,histLimit=6;
+let topic='', pA='', pB='', history=[], turn=0, round=0;
+let autoMode=false, autoTimer=null, isLoading=false, histLimit=6;
+let mode='chat';
 
-function startDebate(){
-  topic=document.getElementById('topic').value.trim();
-  if(!topic){document.getElementById('topic').focus();return;}
-  pA=document.getElementById('pA').value.trim()||'Claude A';
-  pB=document.getElementById('pB').value.trim()||'Claude B';
-  histLimit=parseInt(document.getElementById('hist-limit').value);
-  document.getElementById('setup').style.display='none';
-  document.getElementById('debate').style.display='block';
-  document.getElementById('topic-disp').textContent=topic;
-  history=[];turn=0;round=0;
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-chat').className = 'tab' + (m==='chat' ? ' active' : '');
+  document.getElementById('tab-debate').className = 'tab' + (m==='debate' ? ' active' : '');
+  document.getElementById('topic-label').textContent = m==='chat' ? '대화 주제 (선택)' : '토론 주제';
+  document.getElementById('topic').placeholder = m==='chat'
+    ? '예) 요즘 사는 게 어때? / 비워두면 자유롭게 대화'
+    : '예) 인공지능은 인간의 창의성을 대체할 수 있다';
+  document.getElementById('pA').placeholder = m==='chat' ? '예) 유머러스한 친구' : '예) AI 낙관론자';
+  document.getElementById('pB').placeholder = m==='chat' ? '예) 진지한 철학자' : '예) 인문학자';
+}
+
+function startChat() {
+  topic = document.getElementById('topic').value.trim();
+  pA = document.getElementById('pA').value.trim() || (mode==='chat' ? '클로드 A' : 'Claude A');
+  pB = document.getElementById('pB').value.trim() || (mode==='chat' ? '클로드 B' : 'Claude B');
+  histLimit = parseInt(document.getElementById('hist-limit').value);
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('chat').style.display = 'block';
+  document.getElementById('topic-disp').textContent = topic || (mode==='chat' ? '자유 대화' : '자유 토론');
+  history=[]; turn=0; round=0;
   nextOnce();
 }
 
-function getName(t){return t%2===0?pA:pB;}
-function getSide(t){return t%2===0?'a':'b';}
-function getHist(){return histLimit===0?history:history.slice(-histLimit);}
+function getName(t) { return t%2===0 ? pA : pB; }
+function getSide(t) { return t%2===0 ? 'a' : 'b'; }
+function getHist() { return histLimit===0 ? history : history.slice(-histLimit); }
 
-async function nextOnce(){
-  if(isLoading)return;
-  isLoading=true;setUI(true);
-  const name=getName(turn),side=getSide(turn),other=turn%2===0?pB:pA;
-  showTyping(name,side);
-  const sys=`당신은 "${name}" 페르소나로 주제 "${topic}"에 대해 ${other}와 자유 토론 중입니다. 3~5문장으로 간결하게, 상대 주장에 구체적으로 반응하거나 새 논점을 제시하세요. 한국어 구어체로 말하세요.`;
-  const hist=getHist();
-  const uc=hist.length===0
-    ?`주제 "${topic}"에 대해 첫 발언을 해주세요.`
-    :`지금까지 토론:\n${hist.map(h=>`[${h.name}]: ${h.text}`).join('\n\n')}\n\n위 내용을 이어서 다음 발언을 해주세요.`;
-  try{
-    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,userContent:uc})});
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(`HTTP ${res.status}: ${e.error||'오류'}`);}
-    const data=await res.json();
-    history.push({name,text:data.text,side});
-    round++;
-    document.getElementById('cnt').textContent=round+'번째 발언';
-    removeTyping();addMsg(name,data.text,side);
-    turn++;
-    document.getElementById('turn-lbl').textContent='다음: '+getName(turn);
-  }catch(e){
-    removeTyping();showErr(e.message);stopAuto();
+function buildSystem(name, other) {
+  if (mode === 'chat') {
+    const topicLine = topic ? `주제나 맥락: "${topic}"` : '특별한 주제 없이 자유롭게 대화하세요.';
+    return `당신은 "${name}"입니다. ${other}와 친근하게 자유 대화를 나누고 있어요.
+${topicLine}
+규칙: 2~3문장으로 자연스럽게, 상대방 말에 반응하거나 새 이야기를 꺼내세요. 한국어 구어체로 편하게 말하세요. 너무 딱딱하거나 형식적이지 않게.`;
+  } else {
+    return `당신은 "${name}" 페르소나로 주제 "${topic}"에 대해 ${other}와 토론 중입니다.
+3~5문장으로 간결하게, 상대 주장에 구체적으로 반응하거나 새 논점을 제시하세요. 한국어 구어체로 말하세요.`;
   }
-  isLoading=false;setUI(false);
-  if(autoMode)autoTimer=setTimeout(nextOnce,1800);
 }
 
-function toggleAuto(){if(autoMode)stopAuto();else startAuto();}
-function startAuto(){
+async function nextOnce() {
+  if (isLoading) return;
+  isLoading=true; setUI(true);
+  const name=getName(turn), side=getSide(turn), other=turn%2===0?pB:pA;
+  showTyping(name, side);
+  const sys = buildSystem(name, other);
+  const hist = getHist();
+  const uc = hist.length===0
+    ? (mode==='chat'
+        ? (topic ? `"${topic}"를 주제로 첫 말을 꺼내주세요.` : '자유롭게 첫 말을 꺼내주세요.')
+        : `주제 "${topic}"에 대해 첫 발언을 해주세요.`)
+    : `지금까지 대화:\n${hist.map(h=>`[${h.name}]: ${h.text}`).join('\n\n')}\n\n위 내용을 이어서 다음 말을 해주세요.`;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({system: sys, userContent: uc})
+    });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(`HTTP ${res.status}: ${e.error||'오류'}`); }
+    const data = await res.json();
+    history.push({name, text: data.text, side});
+    round++;
+    document.getElementById('cnt').textContent = round+'번째 대화';
+    removeTyping(); addMsg(name, data.text, side);
+    turn++;
+    document.getElementById('turn-lbl').textContent = getName(turn)+'의 차례';
+  } catch(e) {
+    removeTyping(); showErr(e.message); stopAuto();
+  }
+  isLoading=false; setUI(false);
+  if (autoMode) autoTimer = setTimeout(nextOnce, 1800);
+}
+
+function toggleAuto() { if(autoMode) stopAuto(); else startAuto(); }
+function startAuto() {
   autoMode=true;
   document.getElementById('btn-auto').textContent='■ 정지';
   document.getElementById('btn-once').disabled=true;
-  if(!isLoading)autoTimer=setTimeout(nextOnce,400);
+  if(!isLoading) autoTimer=setTimeout(nextOnce, 400);
 }
-function stopAuto(){
-  autoMode=false;clearTimeout(autoTimer);
-  document.getElementById('btn-auto').textContent='▶ 자동 진행';
+function stopAuto() {
+  autoMode=false; clearTimeout(autoTimer);
+  document.getElementById('btn-auto').textContent='▶ 자동';
   document.getElementById('btn-once').disabled=false;
 }
-function setUI(loading){
-  document.getElementById('btn-once').disabled=loading||autoMode;
-  document.getElementById('btn-auto').disabled=loading&&!autoMode;
+function setUI(loading) {
+  document.getElementById('btn-once').disabled = loading||autoMode;
+  document.getElementById('btn-auto').disabled = loading&&!autoMode;
 }
-function showTyping(name,side){
+function showTyping(name, side) {
   const msgs=document.getElementById('msgs');
   const d=document.createElement('div');
-  d.className='msg'+(side==='b'?' r':'');d.id='typing';
+  d.className='msg'+(side==='b'?' r':''); d.id='typing';
   d.innerHTML=`<div class="av ${side}">${name[0]}</div><div class="bub"><div class="nm">${name}</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
-  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
 }
-function removeTyping(){const el=document.getElementById('typing');if(el)el.remove();}
-function addMsg(name,text,side){
+function removeTyping() { const el=document.getElementById('typing'); if(el) el.remove(); }
+function addMsg(name, text, side) {
   const msgs=document.getElementById('msgs');
   const d=document.createElement('div');
   d.className='msg'+(side==='b'?' r':'');
   d.innerHTML=`<div class="av ${side}">${name[0]}</div><div class="bub"><div class="nm">${name}</div><div>${text}</div></div>`;
-  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
 }
-function showErr(msg){
+function showErr(msg) {
   const msgs=document.getElementById('msgs');
-  const d=document.createElement('div');d.className='err';
-  d.textContent='오류: '+msg;msgs.appendChild(d);
+  const d=document.createElement('div'); d.className='err';
+  d.textContent='오류: '+msg; msgs.appendChild(d);
 }
-function resetAll(){
+function resetAll() {
   stopAuto();
   document.getElementById('setup').style.display='block';
-  document.getElementById('debate').style.display='none';
+  document.getElementById('chat').style.display='none';
   document.getElementById('msgs').innerHTML='';
-  history=[];turn=0;round=0;isLoading=false;
+  history=[]; turn=0; round=0; isLoading=false;
 }
 </script>
 </body>
